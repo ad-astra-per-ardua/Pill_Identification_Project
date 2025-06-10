@@ -16,7 +16,7 @@ function App() {
         <div className="w-6" />
       </header>
 
-      {menuOpen && <SideMenu />}
+      {menuOpen && <SideMenu setMenuOpen={setMenuOpen} />} {/* 사이드메뉴 열기/닫기 */}
 
       <main className="w-full max-w-md p-4">
         <UploadForm image={image} setImage={setImage} setDrugData={setDrugData} />
