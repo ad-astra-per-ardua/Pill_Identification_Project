@@ -1,38 +1,29 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
-from werkzeug.utils import secure_filename
-from db import get_drug_info
-from model_mock import mock_predict
-
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+import os, requests, xml.etree.ElementTree as ET
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+CORS(app)
 
-@app.route('/api/recognize', methods=['POST'])
-def recognize_drug():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image uploaded'}), 400
+API_KEY = 'pc4aEEx+Da+dk2odUnz+EoetScF/K0bRC1YiJi5F6Mdza9DS7EoVXbP5vX4sCKPQHtsYgly4e6L4M7iISLXPdw=='
 
-    image = request.files['image']
-    filename = secure_filename(image.filename)
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+@app.route('/api/search', methods=['GET'])
+def search_drug():
+    name = request.args.get('name')
+    url = 'https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService06/getDrugPrdtPrmsnInq06'
+    params = {'serviceKey': API_KEY, 'item_name': name}
+    resp = requests.get(url, params=params)
+    root = ET.fromstring(resp.content)
+    items = []
+    for it in root.findall('.//item'):
+        item = {
+            'itemSeq': it.findtext('ITEM_SEQ'),
+            'name': it.findtext('ITEM_NAME'),
+            'ingr': it.findtext('ITEM_INGR_NAME'),
+            'img': it.findtext('BIG_PRDT_IMG_URL')
+        }
+        items.append(item)
+    return jsonify(items)
 
-    try:
-        image.save(filepath)
-    except Exception as e:
-        return jsonify({'error': f'File save failed: {str(e)}'}), 500
-
-    predicted_name = mock_predict(filename)
-    drug_info = get_drug_info(predicted_name)
-
-    if not drug_info:
-        return jsonify({'error': 'Drug not found'}), 404
-
-    return jsonify(drug_info)
-
-if __name__ == '__main__':
+if __name__=='__main__':
     app.run(debug=True)
