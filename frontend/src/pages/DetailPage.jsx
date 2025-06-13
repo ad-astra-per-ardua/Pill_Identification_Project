@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchDetail, fetchDUR } from '../api';
-import SlideCarousel from '../components/SlideCarousel';
+import DrugSearch from "../components/DrugSearch";
 
 export default function DetailPage() {
   const { itemSeq } = useParams();
@@ -19,7 +19,7 @@ export default function DetailPage() {
   return (
     <div className="p-4">
       <h1 className="text-lg font-bold">{info.ITEM_NAME}</h1>
-      <SlideCarousel images={info.images} />
+        <DrugSearch/>
       <div className="flex space-x-2 mt-4">
         {['summary','props','indications'].map(t=>(
           <button
